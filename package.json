@@ -1,6 +1,6 @@
 {
   "name": "@adurc/introspector-graphql",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -43,6 +43,7 @@
   },
   "dependencies": {
     "@adurc/core": "^0.1.1",
+    "glob": "^7.1.6",
     "graphql": "^15.4.0",
     "graphql-tag": "^2.11.0"
   }
