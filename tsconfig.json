@@ -14,8 +14,7 @@
     "incremental": true,
   },
   "include": [
-    "src/**/*.ts",
-    "tests/index.spec.ts"
+    "src/**/*.ts"
   ],
   "exclude": [
     "node_modules",

@@ -13,8 +13,7 @@
     "build": "tsc",
     "lint": "eslint --fix src/**",
     "release": "standard-version",
-    "prepublish": "npm run build",
-    "prepublishOnly": "npm test && npm run lint",
+    "prepublishOnly": "npm test && npm run lint && npm run build",
     "test": "jest"
   },
   "repository": {
@@ -44,6 +43,7 @@
   },
   "dependencies": {
     "@adurc/core": "0.0.2",
+    "graphql": "^15.4.0",
     "graphql-tag": "^2.11.0"
   }
 }

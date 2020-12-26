@@ -4,42 +4,40 @@ import util from 'util';
 import glob from 'glob';
 import { parse } from 'graphql';
 import { GraphQLSerializer } from './serializer';
-import { AdurcIntrospector, AdurcModel } from '@adurc/core';
+import { AdurcModel } from '@adurc/core/dist/interfaces/model';
+import { BuilderGeneratorFunction } from '@adurc/core/dist/interfaces/builder.generator';
 
 const readFileAsync = util.promisify(fs.readFile);
 const globAsync = util.promisify(glob);
 
-export class GraphQLIntrospector extends AdurcIntrospector {
+export class GraphQLIntrospector {
 
-    constructor(
-        private readonly options: GraphQLIntrospectorOptions,
-    ) {
-        super();
-    }
 
-    public async introspect(): Promise<AdurcModel[]> {
-        const files = await globAsync(this.options.path);
-        const readFileOptions = { encoding: this.options.encoding ?? 'utf8' };
-        const output: AdurcModel[] = [];
+    static use(options: GraphQLIntrospectorOptions): BuilderGeneratorFunction {
+        return async function* GraphQLIntrospectorGenerator() {
+            const files = await globAsync(options.path);
+            const readFileOptions = { encoding: options.encoding ?? 'utf8' };
+            const output: AdurcModel[] = [];
 
-        for (const file of files) {
-            const content = await readFileAsync(file, readFileOptions);
+            for (const file of files) {
+                const content = await readFileAsync(file, readFileOptions);
 
-            try {
-                const document = parse(content);
+                try {
+                    const document = parse(content);
 
-                for (const definition of document.definitions) {
-                    if (definition.kind !== 'ObjectTypeDefinition') {
-                        throw new Error(`Unsupported definition type: ${definition.kind}`);
+                    for (const definition of document.definitions) {
+                        if (definition.kind !== 'ObjectTypeDefinition') {
+                            throw new Error(`Unsupported definition type: ${definition.kind}`);
+                        }
+
+                        output.push(GraphQLSerializer.deserializeModel(options, definition));
                     }
-
-                    output.push(GraphQLSerializer.deserializeModel(definition));
+                } catch (e) {
+                    throw new Error('Error parsing graphql document: ' + e.toString());
                 }
-            } catch (e) {
-                throw new Error('Error parsing graphql document: ' + e.toString());
             }
-        }
 
-        return output;
+            yield;
+        };
     }
 }

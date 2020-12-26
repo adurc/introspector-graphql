@@ -1,5 +1,7 @@
-import { AdurcDirective, AdurcField, AdurcModel, AdurcObject, AdurcValue } from '@adurc/core/dist/interfaces/model';
-import { DefinitionNode, DirectiveNode, FieldDefinitionNode, ListTypeNode, ListValueNode, NonNullTypeNode, ObjectValueNode, ValueNode } from 'graphql';
+import { AdurcDirective, AdurcField, AdurcFieldReference, AdurcModel } from '@adurc/core/dist/interfaces/model';
+import { AdurcObject, AdurcPrimitiveDefinition, AdurcValue } from '@adurc/core/dist/interfaces/common';
+import { DefinitionNode, DirectiveNode, FieldDefinitionNode, ListTypeNode, ListValueNode, NonNullTypeNode, ObjectValueNode, StringValueNode, ValueNode } from 'graphql';
+import { GraphQLIntrospectorOptions } from './options';
 
 export class GraphQLSerializer {
 
@@ -45,7 +47,15 @@ export class GraphQLSerializer {
     }
 
     public static deserializeDirective(definition: DirectiveNode): AdurcDirective {
-        const name = definition.name.value;
+        const parts = definition.name.value.split('_', 1);
+
+        if(parts.length !== 2){
+            throw new Error(`Unknown directive ${definition.name}, correct format is @<provider>_<name>`);
+        }
+
+        const provider = parts[0];
+        const name = parts[1];
+
         const args: AdurcObject<string | number | boolean | AdurcObject> | AdurcValue = {};
 
         for (const argument of definition.arguments) {
@@ -53,6 +63,7 @@ export class GraphQLSerializer {
         }
 
         return {
+            provider,
             name,
             args,
         };
@@ -79,11 +90,14 @@ export class GraphQLSerializer {
             nonNull,
             collection,
             type: this.graphqlTypeToDataServerType(typeNode.name.value),
-            directives: definition.directives?.map(x => this.deserializeDirective(x)) ?? [],
+            directives: definition.directives
+                // ignore core directives
+                ?.filter(x => ['source'].indexOf(x.name.value) === -1)
+                .map(x => this.deserializeDirective(x)) ?? [],
         };
     }
 
-    public static graphqlTypeToDataServerType(graphqlType: string): string {
+    public static graphqlTypeToDataServerType(graphqlType: string): AdurcPrimitiveDefinition | AdurcFieldReference {
         switch (graphqlType) {
             case 'String':
                 return 'string';
@@ -100,17 +114,24 @@ export class GraphQLSerializer {
             case 'Buffer':
                 return 'buffer';
             default: // Is relation entity
-                return graphqlType;
+                return { model: graphqlType, source: '' };
         }
     }
 
-    public static deserializeModel(definition: DefinitionNode): AdurcModel {
+    public static deserializeModel(options: GraphQLIntrospectorOptions, definition: DefinitionNode): AdurcModel {
         if (definition.kind !== 'ObjectTypeDefinition') {
             throw new Error(`Invalid definition node. Expected ObjectTypeDefinition and received ${definition.kind}`);
         }
 
+        const sourceDirective = definition.directives.find(x => x.name.value === 'source');
+
         const name: string = definition.name.value;
         const fields: AdurcField[] = [];
+        const source = sourceDirective ? (sourceDirective.arguments.find(x => x.name.value === 'name')?.value as StringValueNode).value : options.defaultSourceName;
+
+        if (!source) {
+            throw new Error(`Source not declared in model ${name}`);
+        }
 
         for (const field of definition.fields) {
             const modelField = this.deserializeField(field);
@@ -118,6 +139,7 @@ export class GraphQLSerializer {
         }
 
         return {
+            source,
             name,
             fields,
             directives: definition.directives?.map(x => this.deserializeDirective(x)) ?? [],
