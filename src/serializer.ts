@@ -69,7 +69,7 @@ export class GraphQLSerializer {
         };
     }
 
-    public static deserializeField(definition: FieldDefinitionNode): AdurcField {
+    public static deserializeField(options: GraphQLIntrospectorOptions, definition: FieldDefinitionNode): AdurcField {
         if (definition.kind !== 'FieldDefinition') {
             throw new Error(`Invalid definition node. Expected ObjectTypeDefinition and received ${definition.kind}`);
         }
@@ -89,7 +89,7 @@ export class GraphQLSerializer {
             name,
             nonNull,
             collection,
-            type: this.graphqlTypeToDataServerType(typeNode.name.value),
+            type: this.graphqlTypeToDataServerType(options, typeNode.name.value),
             directives: definition.directives
                 // ignore core directives
                 ?.filter(x => ['source'].indexOf(x.name.value) === -1)
@@ -97,7 +97,7 @@ export class GraphQLSerializer {
         };
     }
 
-    public static graphqlTypeToDataServerType(graphqlType: string): AdurcPrimitiveDefinition | AdurcFieldReference {
+    public static graphqlTypeToDataServerType(options: GraphQLIntrospectorOptions, graphqlType: string): AdurcPrimitiveDefinition | AdurcFieldReference {
         switch (graphqlType) {
             case 'String':
                 return 'string';
@@ -114,7 +114,8 @@ export class GraphQLSerializer {
             case 'Buffer':
                 return 'buffer';
             default: // Is relation entity
-                return { model: graphqlType, source: '' };
+                // TODO: Pending get source from parsed models
+                return { model: graphqlType, source: options.defaultSourceName };
         }
     }
 
@@ -134,7 +135,7 @@ export class GraphQLSerializer {
         }
 
         for (const field of definition.fields) {
-            const modelField = this.deserializeField(field);
+            const modelField = this.deserializeField(options, field);
             fields.push(modelField);
         }
 
