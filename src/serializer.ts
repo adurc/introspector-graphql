@@ -47,14 +47,14 @@ export class GraphQLSerializer {
     }
 
     public static deserializeDirective(definition: DirectiveNode): AdurcDirective {
-        const parts = definition.name.value.split('_', 2);
+        const parts = /^([^_]+)_(.+?)$/gmi.exec(definition.name.value);
 
-        if(parts.length !== 2){
+        if (parts === null) {
             throw new Error(`Unknown directive ${definition.name.value}, correct format is @<provider>_<name>`);
         }
 
-        const provider = parts[0];
-        const name = parts[1];
+        const provider = parts[1];
+        const name = parts[2];
 
         const args: AdurcObject<string | number | boolean | AdurcObject> | AdurcValue = {};
 
