@@ -16,10 +16,10 @@ export class GraphQLIntrospector {
             const files: string[] = await globAsync(options.path);
             const readFileOptions = { encoding: options.encoding ?? 'utf8' };
 
-            console.log(`[introspector-graphql] glob: ${options.path}`);
+            context.logger.debug(`[introspector-graphql] glob: ${options.path}`);
 
             for (const file of files) {
-                console.log(`[introspector-graphql] + ${file}`);
+                context.logger.debug(`[introspector-graphql] + ${file}`);
 
                 const content = await readFileAsync(file, readFileOptions);
 
@@ -33,7 +33,7 @@ export class GraphQLIntrospector {
 
                         const model = GraphQLSerializer.deserializeModel(options, definition);
 
-                        console.log(`[introspector-graphql] + + source: ${model.source}, model: ${model.name}, fields: ${model.fields.map(x => x.name).join(',')}`);
+                        context.logger.debug(`[introspector-graphql] + + source: ${model.source}, model: ${model.name}, fields: ${model.fields.map(x => x.name).join(',')}`);
 
                         context.models.push(model);
                     }
