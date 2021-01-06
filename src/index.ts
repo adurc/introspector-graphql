@@ -35,7 +35,7 @@ export class GraphQLIntrospector {
 
                         context.logger.debug(`[introspector-graphql] + + source: ${model.source}, model: ${model.name}, fields: ${model.fields.map(x => x.name).join(',')}`);
 
-                        context.models.push(model);
+                        context.addModel(model);
                     }
                 } catch (e) {
                     throw new Error('Error parsing graphql document: ' + e.toString());

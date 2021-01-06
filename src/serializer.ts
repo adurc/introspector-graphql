@@ -1,7 +1,8 @@
-import { AdurcDirective, AdurcField, AdurcFieldReference, AdurcModel } from '@adurc/core/dist/interfaces/model';
+import { AdurcDirective, AdurcField, AdurcFieldReference } from '@adurc/core/dist/interfaces/model';
 import { AdurcObject, AdurcPrimitiveDefinition, AdurcValue } from '@adurc/core/dist/interfaces/common';
 import { DefinitionNode, DirectiveNode, FieldDefinitionNode, ListTypeNode, ListValueNode, NonNullTypeNode, ObjectValueNode, StringValueNode, ValueNode } from 'graphql';
 import { GraphQLIntrospectorOptions } from './options';
+import { AdurcModelBuilder } from '@adurc/core/dist/interfaces/context';
 
 export class GraphQLSerializer {
 
@@ -119,7 +120,7 @@ export class GraphQLSerializer {
         }
     }
 
-    public static deserializeModel(options: GraphQLIntrospectorOptions, definition: DefinitionNode): AdurcModel {
+    public static deserializeModel(options: GraphQLIntrospectorOptions, definition: DefinitionNode): AdurcModelBuilder {
         if (definition.kind !== 'ObjectTypeDefinition') {
             throw new Error(`Invalid definition node. Expected ObjectTypeDefinition and received ${definition.kind}`);
         }
