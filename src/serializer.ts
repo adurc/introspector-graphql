@@ -1,8 +1,7 @@
-import { AdurcDirective, AdurcField, AdurcFieldReference } from '@adurc/core/dist/interfaces/model';
+import { AdurcDirective, AdurcField, AdurcFieldReference, AdurcModelSchema } from '@adurc/core/dist/interfaces/model';
 import { AdurcObject, AdurcPrimitiveDefinition, AdurcValue } from '@adurc/core/dist/interfaces/common';
 import { DefinitionNode, DirectiveNode, FieldDefinitionNode, ListTypeNode, ListValueNode, NonNullTypeNode, ObjectValueNode, StringValueNode, ValueNode } from 'graphql';
 import { GraphQLIntrospectorOptions } from './options';
-import { AdurcModelBuilder } from '@adurc/core/dist/interfaces/context';
 
 export class GraphQLSerializer {
 
@@ -70,7 +69,7 @@ export class GraphQLSerializer {
         };
     }
 
-    public static deserializeField(options: GraphQLIntrospectorOptions, definition: FieldDefinitionNode): AdurcField {
+    public static deserializeField(options: GraphQLIntrospectorOptions, definition: FieldDefinitionNode): Omit<AdurcField, 'accessorName'> {
         if (definition.kind !== 'FieldDefinition') {
             throw new Error(`Invalid definition node. Expected ObjectTypeDefinition and received ${definition.kind}`);
         }
@@ -120,7 +119,7 @@ export class GraphQLSerializer {
         }
     }
 
-    public static deserializeModel(options: GraphQLIntrospectorOptions, definition: DefinitionNode): AdurcModelBuilder {
+    public static deserializeModel(options: GraphQLIntrospectorOptions, definition: DefinitionNode): AdurcModelSchema {
         if (definition.kind !== 'ObjectTypeDefinition') {
             throw new Error(`Invalid definition node. Expected ObjectTypeDefinition and received ${definition.kind}`);
         }
@@ -128,7 +127,7 @@ export class GraphQLSerializer {
         const sourceDirective = definition.directives.find(x => x.name.value === 'source');
 
         const name: string = definition.name.value;
-        const fields: AdurcField[] = [];
+        const fields: Omit<AdurcField, 'accessorName'>[] = [];
         const source = sourceDirective ? (sourceDirective.arguments.find(x => x.name.value === 'name')?.value as StringValueNode).value : options.defaultSourceName;
 
         if (!source) {
